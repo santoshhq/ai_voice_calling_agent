@@ -44,10 +44,11 @@ class SarvamStreamingTTS:
 
     async def speak(self, text: str):
 
-        if self.ws is None:
-            return
-
         try:
+
+            # Create a fresh connection if needed
+            if self.ws is None:
+                await self.connect()
 
             await self.ws.convert(text)
 
@@ -57,47 +58,43 @@ class SarvamStreamingTTS:
 
                 message = await self.ws.recv()
 
-                #
-                # Audio Chunk
-                #
                 if isinstance(message, AudioOutput):
 
                     if self.on_audio:
+                        await self.on_audio(message.data.audio)
 
-                        await self.on_audio(
-                            message.data.audio
-                        )
-
-                #
-                # Final Event
-                #
                 elif isinstance(message, EventResponse):
 
                     if message.data.event_type == "final":
-
                         break
 
         except Exception as e:
 
             print(f"❌ TTS Error : {e}")
 
+        finally:
+
+            # Always close the connection after one utterance
+            await self.disconnect()
+
     async def disconnect(self):
 
         try:
 
             if self.connection:
-
                 await self.connection.__aexit__(
                     None,
                     None,
                     None
                 )
 
-        except Exception as e:
-
-            print(f"TTS Disconnect Error : {e}")
+        except Exception:
+            # Ignore "1000 OK" close errors during cleanup
+            pass
 
         finally:
 
             self.ws = None
             self.connection = None
+
+            print("🔌 TTS Disconnected")

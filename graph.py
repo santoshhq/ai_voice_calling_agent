@@ -10,7 +10,7 @@ from prompts import SYSTEM_PROMPT
 load_dotenv()
 
 gemini_model=ChatGoogleGenerativeAI(model="gemini-2.5-flash")
-memory =InMemorySaver()   
+ 
 async def build_graph():
     
     async def ChatAssistance(state:MessagesState)->MessagesState:
@@ -26,4 +26,4 @@ async def build_graph():
     graph.add_node("ChatAssistance",ChatAssistance)
     graph.add_edge(START,"ChatAssistance")
     graph.add_edge("ChatAssistance",END)
-    return graph.compile(checkpointer=memory )
+    return graph.compile( )
